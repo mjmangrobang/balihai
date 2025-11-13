@@ -4,6 +4,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const connectDB = require('./config/db');
+const path = require('path'); // Import path module
 
 // Load environment variables
 dotenv.config();
@@ -17,17 +18,22 @@ const app = express();
 app.use(express.json());
 
 // CORS Configuration
-// This allows the frontend to communicate with this backend
 app.use(cors({
   origin: [
     'http://localhost:3000', // Local React Frontend
-    process.env.CLIENT_URL   // Production Netlify URL (We will set this on Render later)
+    process.env.CLIENT_URL   // Production URL
   ],
   credentials: true
 }));
 
-app.use(helmet());
+// Helmet security (adjust for image loading if necessary)
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
 app.use(morgan('common'));
+
+// Make the "uploads" folder static so images can be viewed
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Routes
 app.use('/api/auth', require('./routes/authRoutes'));

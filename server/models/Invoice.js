@@ -20,12 +20,17 @@ const InvoiceSchema = new mongoose.Schema({
     required: true,
   },
   penalty: {
-    type: Number, // Added Penalty for delinquents
+    type: Number,
     default: 0,
   },
   totalAmount: {
-    type: Number, // Amount + Penalty
+    type: Number, // Target total to be paid
     required: true,
+  },
+  // --- NEW FIELD: Track how much has been paid so far ---
+  amountPaid: {
+    type: Number,
+    default: 0,
   },
   month: { type: String },
   year: { type: Number },
@@ -35,7 +40,7 @@ const InvoiceSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['unpaid', 'paid', 'overdue', 'partial'],
+    enum: ['unpaid', 'paid', 'overdue', 'partial', 'pending_approval'],
     default: 'unpaid',
   },
   createdAt: {
