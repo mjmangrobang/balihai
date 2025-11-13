@@ -15,12 +15,22 @@ const app = express();
 
 // Middleware
 app.use(express.json());
-app.use(cors());
+
+// CORS Configuration
+// This allows the frontend to communicate with this backend
+app.use(cors({
+  origin: [
+    'http://localhost:3000', // Local React Frontend
+    process.env.CLIENT_URL   // Production Netlify URL (We will set this on Render later)
+  ],
+  credentials: true
+}));
+
 app.use(helmet());
 app.use(morgan('common'));
 
 // Routes
-app.use('/api/auth', require('./routes/authRoutes')); // <--- ADDED THIS LINE
+app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/dashboard', require('./routes/dashboardRoutes'));
 app.use('/api/residents', require('./routes/residentRoutes'));
 app.use('/api/billing', require('./routes/billingRoutes'));
