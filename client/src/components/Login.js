@@ -8,10 +8,8 @@ import {
   TextField,
   Button,
   Alert,
-  Paper,
-  Avatar
+  Paper
 } from '@mui/material';
-import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -69,9 +67,16 @@ const Login = () => {
         }}
       >
         <Paper elevation={3} sx={{ p: 4, display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
-          <Avatar sx={{ m: 1, bgcolor: 'secondary.main' }}>
-            <LockOutlinedIcon />
-          </Avatar>
+          
+          {/* UPDATED LOGO SECTION */}
+          <Box sx={{ mb: 2 }}>
+            <img 
+              src="/logo.png" 
+              alt="BALIHAI Logo" 
+              style={{ width: '100px', height: 'auto' }} 
+            />
+          </Box>
+
           <Typography component="h1" variant="h5">
             BALIHAI Sign In
           </Typography>
@@ -82,7 +87,6 @@ const Login = () => {
             </Alert>
           )}
 
-          {/* Added autoComplete="off" to the form element */}
           <Box component="form" onSubmit={onSubmit} sx={{ mt: 1, width: '100%' }} autoComplete="off">
             <TextField
               margin="normal"
@@ -91,7 +95,6 @@ const Login = () => {
               id="email"
               label="Email Address"
               name="email"
-              // Changed to 'off' to disable suggestion
               autoComplete="off"
               autoFocus
               value={email}
@@ -105,7 +108,6 @@ const Login = () => {
               label="Password"
               type="password"
               id="password"
-              // Changed to 'new-password' to prevent browser caching of old passwords
               autoComplete="new-password"
               value={password}
               onChange={onChange}
