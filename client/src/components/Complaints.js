@@ -60,6 +60,7 @@ const Complaints = () => {
 
   useEffect(() => {
     fetchComplaints();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tabValue]);
 
   const fetchComplaints = async () => {

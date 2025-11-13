@@ -52,8 +52,9 @@ const Announcements = () => {
   const user = JSON.parse(localStorage.getItem('user'));
   const isAdmin = user?.role === 'admin' || user?.role === 'staff';
 
-  useEffect(() => {
+useEffect(() => {
     fetchAnnouncements();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tabValue]);
 
   const fetchAnnouncements = async () => {
