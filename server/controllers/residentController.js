@@ -1,6 +1,6 @@
 const Resident = require('../models/Resident');
 const User = require('../models/User');
-const bcrypt = require('bcryptjs');
+// Removed bcrypt requirement as we don't need it here anymore
 
 // @desc    Get all residents
 // @route   GET /api/residents
@@ -50,14 +50,14 @@ const addResident = async (req, res) => {
     // Generate a dummy email if none provided: firstname.lastname@balihai.com
     const userEmail = email || `${firstName.toLowerCase()}.${lastName.toLowerCase().replace(/\s/g, '')}@balihai.com`;
     
-    // Default Password
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash('Balihai@123', salt);
+    // FIX: Do NOT hash the password here. 
+    // The User model's pre('save') hook will handle the hashing automatically.
+    const defaultPassword = 'Balihai@123'; 
 
     await User.create({
       name: `${firstName} ${lastName}`,
       email: userEmail,
-      password: hashedPassword,
+      password: defaultPassword, // Send plain text, model will encrypt it
       role: 'resident',
       linkedResident: resident._id,
       isActive: true
