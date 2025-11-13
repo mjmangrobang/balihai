@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+// CHANGE: Import from custom api config
+import axios from '../api/axios';
 import Layout from './Layout';
 import {
   Box,
@@ -32,7 +33,6 @@ const Complaints = () => {
   const [residents, setResidents] = useState([]);
   const [open, setOpen] = useState(false);
   
-  // For Status Menu
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedId, setSelectedId] = useState(null);
 
@@ -87,7 +87,6 @@ const Complaints = () => {
     }
   };
 
-  // Status Update Handlers
   const handleMenuClick = (event, id) => {
     setAnchorEl(event.currentTarget);
     setSelectedId(id);
@@ -114,7 +113,7 @@ const Complaints = () => {
     if (status === 'resolved') return 'success';
     if (status === 'rejected') return 'error';
     if (status === 'in_progress') return 'warning';
-    return 'default'; // pending
+    return 'default';
   };
 
   return (
@@ -179,7 +178,6 @@ const Complaints = () => {
         </Table>
       </TableContainer>
 
-      {/* Status Menu */}
       <Menu
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
@@ -191,7 +189,6 @@ const Complaints = () => {
         <MenuItem onClick={() => handleStatusChange('rejected')}>Mark as Rejected</MenuItem>
       </Menu>
 
-      {/* Add Dialog */}
       <Dialog open={open} onClose={() => setOpen(false)} fullWidth>
         <DialogTitle>Log New Ticket</DialogTitle>
         <DialogContent>

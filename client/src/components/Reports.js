@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+// CHANGE: Import from custom api config
+import axios from '../api/axios';
 import Layout from './Layout';
 import {
   Box,
@@ -54,13 +55,10 @@ const Reports = () => {
 
   return (
     <Layout>
-      {/* This section is visible on screen but hidden when printing if you use CSS media queries, 
-          but for simplicity we print everything inside Layout */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3, '@media print': { display: 'none' } }}>
         <Typography variant="h4">Financial Reports</Typography>
       </Box>
 
-      {/* Controls (Hidden when printing) */}
       <Paper sx={{ p: 3, mb: 3, '@media print': { display: 'none' } }}>
         <Grid container spacing={2} alignItems="center">
           <Grid item xs={12} md={4}>
@@ -96,7 +94,6 @@ const Reports = () => {
         </Grid>
       </Paper>
 
-      {/* Report Display */}
       {reportData && (
         <Paper sx={{ p: 4 }} id="printable-area">
           <Box sx={{ textAlign: 'center', mb: 4 }}>

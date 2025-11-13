@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+// CHANGE: Import from custom api config
+import axios from '../api/axios';
 import Layout from './Layout';
 import {
   Box,
@@ -82,7 +83,7 @@ const Announcements = () => {
   const getPriorityColor = (priority) => {
     if (priority === 'urgent') return 'error';
     if (priority === 'high') return 'warning';
-    return 'primary'; // normal
+    return 'primary';
   };
 
   return (
@@ -141,7 +142,6 @@ const Announcements = () => {
         )}
       </List>
 
-      {/* Post Dialog */}
       <Dialog open={open} onClose={() => setOpen(false)} fullWidth>
         <DialogTitle>New Announcement</DialogTitle>
         <DialogContent>

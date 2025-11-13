@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+// CHANGE: Import from custom api config
+import axios from '../api/axios';
 import Layout from './Layout';
 import {
   Box,

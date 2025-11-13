@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+// CHANGE: Import from custom api config
+import axios from '../api/axios';
 import Layout from './Layout';
 import {
   Box,
@@ -33,7 +34,7 @@ import SearchIcon from '@mui/icons-material/Search';
 
 const Residents = () => {
   const [residents, setResidents] = useState([]);
-  const [searchTerm, setSearchTerm] = useState(''); // State for Search
+  const [searchTerm, setSearchTerm] = useState('');
   const [open, setOpen] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
   const [currentId, setCurrentId] = useState(null);
@@ -65,7 +66,6 @@ const Residents = () => {
     }
   };
 
-  // Search Logic
   const filteredResidents = residents.filter((resident) => 
     resident.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     resident.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -168,7 +168,6 @@ const Residents = () => {
         </Button>
       </Box>
 
-      {/* Search Bar */}
       <Paper sx={{ p: 2, mb: 3 }}>
         <TextField
           fullWidth

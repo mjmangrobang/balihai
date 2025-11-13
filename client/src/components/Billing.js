@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+// CHANGE: Import from custom api config
+import axios from '../api/axios';
 import Layout from './Layout';
 import {
   Box,
@@ -30,7 +31,7 @@ import FilterListIcon from '@mui/icons-material/FilterList';
 const Billing = () => {
   const [invoices, setInvoices] = useState([]);
   const [residents, setResidents] = useState([]);
-  const [filterStatus, setFilterStatus] = useState('all'); // Filter State
+  const [filterStatus, setFilterStatus] = useState('all');
   
   const [openInvoiceDialog, setOpenInvoiceDialog] = useState(false);
   const [openPaymentDialog, setOpenPaymentDialog] = useState(false);
@@ -77,7 +78,6 @@ const Billing = () => {
     }
   };
 
-  // Filter Logic
   const filteredInvoices = invoices.filter(invoice => {
     if (filterStatus === 'all') return true;
     return invoice.status === filterStatus;
@@ -138,7 +138,6 @@ const Billing = () => {
         </Button>
       </Box>
 
-      {/* Filter Bar */}
       <Paper sx={{ p: 2, mb: 3, display: 'flex', alignItems: 'center', gap: 2 }}>
         <FilterListIcon color="action" />
         <Typography variant="subtitle1">Filter Status:</Typography>
@@ -205,7 +204,6 @@ const Billing = () => {
         </Table>
       </TableContainer>
 
-      {/* Create Invoice Dialog */}
       <Dialog open={openInvoiceDialog} onClose={() => setOpenInvoiceDialog(false)} fullWidth>
         <DialogTitle>Create New Invoice</DialogTitle>
         <DialogContent>
@@ -246,7 +244,6 @@ const Billing = () => {
         </DialogActions>
       </Dialog>
 
-      {/* Record Payment Dialog */}
       <Dialog open={openPaymentDialog} onClose={() => setOpenPaymentDialog(false)}>
         <DialogTitle>Record Payment</DialogTitle>
         <DialogContent>

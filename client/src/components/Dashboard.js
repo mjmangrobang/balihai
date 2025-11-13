@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+// CHANGE: Import from custom api config
+import axios from '../api/axios';
 import Layout from './Layout';
 import { Grid, Paper, Typography, Box, CircularProgress } from '@mui/material';
 import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
@@ -102,7 +103,6 @@ const Dashboard = () => {
         </Grid>
       </Grid>
 
-      {/* Placeholder for future Charts/Recent Activities */}
       <Box sx={{ mt: 5 }}>
         <Paper sx={{ p: 3 }}>
           <Typography variant="h6" gutterBottom>

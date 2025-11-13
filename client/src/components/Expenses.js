@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+// CHANGE: Import from custom api config
+import axios from '../api/axios';
 import Layout from './Layout';
 import {
   Box,
@@ -36,7 +37,7 @@ const Expenses = () => {
     category: 'maintenance',
     amount: '',
     description: '',
-    date: new Date().toISOString().split('T')[0], // Today's date YYYY-MM-DD
+    date: new Date().toISOString().split('T')[0],
   });
 
   useEffect(() => {
@@ -90,7 +91,6 @@ const Expenses = () => {
     }
   };
 
-  // Calculate Total Expenses
   const totalExpenses = expenses.reduce((acc, curr) => acc + curr.amount, 0);
 
   return (
@@ -161,7 +161,6 @@ const Expenses = () => {
         </Table>
       </TableContainer>
 
-      {/* Add Dialog */}
       <Dialog open={open} onClose={() => setOpen(false)} maxWidth="sm" fullWidth>
         <DialogTitle>Log New Expense</DialogTitle>
         <DialogContent>
