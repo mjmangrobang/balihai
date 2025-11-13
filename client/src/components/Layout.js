@@ -12,8 +12,7 @@ import {
   ListItemButton, 
   ListItemIcon, 
   ListItemText,
-  IconButton,
-  Avatar
+  IconButton
 } from '@mui/material';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import PeopleIcon from '@mui/icons-material/People';
