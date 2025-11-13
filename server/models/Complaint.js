@@ -30,6 +30,10 @@ const ComplaintSchema = new mongoose.Schema({
   },
   resolvedDate: {
     type: Date,
+  },
+  isArchived: { // New Field for Archiving
+    type: Boolean,
+    default: false
   }
 });
 

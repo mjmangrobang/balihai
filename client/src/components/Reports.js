@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-// CHANGE: Import from custom api config
+import React, { useState, useEffect, useRef } from 'react';
 import axios from '../api/axios';
 import Layout from './Layout';
+import { useReactToPrint } from 'react-to-print';
 import {
   Box,
   Button,
@@ -15,33 +15,62 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Divider
+  Divider,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem
 } from '@mui/material';
 import AssessmentIcon from '@mui/icons-material/Assessment';
 import PrintIcon from '@mui/icons-material/Print';
 
 const Reports = () => {
+  const [reportType, setReportType] = useState('financial_summary');
   const [dateRange, setDateRange] = useState({
-    startDate: '',
-    endDate: ''
+    startDate: new Date().toISOString().split('T')[0],
+    endDate: new Date().toISOString().split('T')[0]
   });
+  const [residents, setResidents] = useState([]);
+  const [selectedResident, setSelectedResident] = useState('');
   const [reportData, setReportData] = useState(null);
+
+  const componentRef = useRef();
+  const handlePrint = useReactToPrint({
+    content: () => componentRef.current,
+  });
+
+  useEffect(() => {
+    // Load residents for the Ledger Dropdown
+    const fetchResidents = async () => {
+      try {
+        const user = JSON.parse(localStorage.getItem('user'));
+        const config = { headers: { Authorization: `Bearer ${user.token}` } };
+        const { data } = await axios.get('/api/residents', config);
+        setResidents(data);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    fetchResidents();
+  }, []);
 
   const handleChange = (e) => {
     setDateRange({ ...dateRange, [e.target.name]: e.target.value });
   };
 
   const generateReport = async () => {
-    if (!dateRange.startDate || !dateRange.endDate) {
-      alert('Please select both start and end dates');
-      return;
-    }
-
     try {
       const user = JSON.parse(localStorage.getItem('user'));
       const config = { headers: { Authorization: `Bearer ${user.token}` } };
       
-      const { data } = await axios.post('/api/reports/financial', dateRange, config);
+      const payload = {
+        type: reportType,
+        startDate: dateRange.startDate,
+        endDate: dateRange.endDate,
+        residentId: selectedResident // Only used if type is customer_ledger
+      };
+
+      const { data } = await axios.post('/api/reports/generate', payload, config);
       setReportData(data);
     } catch (error) {
       console.error(error);
@@ -49,143 +78,260 @@ const Reports = () => {
     }
   };
 
-  const handlePrint = () => {
-    window.print();
+  // --- DYNAMIC TABLE HEADER ---
+  const renderTableHead = () => {
+    switch (reportType) {
+      case 'collection_report':
+        return (
+          <TableRow>
+            <TableCell>Date</TableCell>
+            <TableCell>Resident</TableCell>
+            <TableCell>Details</TableCell>
+            <TableCell>Method</TableCell>
+            <TableCell align="right">Amount</TableCell>
+          </TableRow>
+        );
+      case 'expense_report':
+        return (
+          <TableRow>
+            <TableCell>Date</TableCell>
+            <TableCell>Title</TableCell>
+            <TableCell>Category</TableCell>
+            <TableCell>Particulars</TableCell>
+            <TableCell align="right">Amount</TableCell>
+          </TableRow>
+        );
+      case 'customer_ledger':
+        return (
+          <TableRow>
+            <TableCell>Date</TableCell>
+            <TableCell>Description</TableCell>
+            <TableCell>Ref No.</TableCell>
+            <TableCell align="right">Debit (Charge)</TableCell>
+            <TableCell align="right">Credit (Pay)</TableCell>
+            <TableCell align="right" sx={{ fontWeight: 'bold' }}>Balance</TableCell>
+          </TableRow>
+        );
+      default: // Financial Summary
+        return (
+          <TableRow>
+            <TableCell>Summary View Only</TableCell>
+          </TableRow>
+        );
+    }
+  };
+
+  // --- DYNAMIC TABLE BODY ---
+  const renderTableBody = () => {
+    if (!reportData || !reportData.details) return null;
+
+    return reportData.details.map((row, index) => {
+      if (reportType === 'collection_report') {
+        return (
+          <TableRow key={index}>
+            <TableCell>{new Date(row.date).toLocaleDateString()}</TableCell>
+            <TableCell>
+              <Typography variant="body2" fontWeight="bold">{row.resident}</Typography>
+              <Typography variant="caption">{row.blockLot}</Typography>
+            </TableCell>
+            <TableCell>{row.description}</TableCell>
+            <TableCell sx={{ textTransform: 'capitalize' }}>{row.method}</TableCell>
+            <TableCell align="right">₱{row.amount.toLocaleString()}</TableCell>
+          </TableRow>
+        );
+      }
+      if (reportType === 'expense_report') {
+        return (
+          <TableRow key={index}>
+            <TableCell>{new Date(row.date).toLocaleDateString()}</TableCell>
+            <TableCell>{row.title}</TableCell>
+            <TableCell sx={{ textTransform: 'capitalize' }}>{row.category}</TableCell>
+            <TableCell>{row.particulars}</TableCell>
+            <TableCell align="right">₱{row.amount.toLocaleString()}</TableCell>
+          </TableRow>
+        );
+      }
+      if (reportType === 'customer_ledger') {
+        return (
+          <TableRow key={index}>
+            <TableCell>{new Date(row.date).toLocaleDateString()}</TableCell>
+            <TableCell>{row.description}</TableCell>
+            <TableCell>{row.ref}</TableCell>
+            <TableCell align="right">{row.debit > 0 ? `₱${row.debit.toLocaleString()}` : '-'}</TableCell>
+            <TableCell align="right">{row.credit > 0 ? `₱${row.credit.toLocaleString()}` : '-'}</TableCell>
+            <TableCell align="right" sx={{ fontWeight: 'bold' }}>₱{row.balance.toLocaleString()}</TableCell>
+          </TableRow>
+        );
+      }
+      return null;
+    });
   };
 
   return (
     <Layout>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3, '@media print': { display: 'none' } }}>
-        <Typography variant="h4">Financial Reports</Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
+        <Typography variant="h4">Reports Generator</Typography>
       </Box>
 
-      <Paper sx={{ p: 3, mb: 3, '@media print': { display: 'none' } }}>
+      {/* CONTROLS */}
+      <Paper sx={{ p: 3, mb: 3 }}>
         <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12} md={4}>
+          <Grid item xs={12} md={3}>
+            <FormControl fullWidth>
+              <InputLabel>Report Type</InputLabel>
+              <Select 
+                value={reportType} 
+                label="Report Type" 
+                onChange={(e) => setReportType(e.target.value)}
+              >
+                <MenuItem value="financial_summary">Financial Summary</MenuItem>
+                <MenuItem value="collection_report">Daily/Period Collection</MenuItem>
+                <MenuItem value="expense_report">Expense Report</MenuItem>
+                <MenuItem value="customer_ledger">Customer Ledger</MenuItem>
+              </Select>
+            </FormControl>
+          </Grid>
+
+          {reportType === 'customer_ledger' && (
+            <Grid item xs={12} md={3}>
+              <FormControl fullWidth>
+                <InputLabel>Select Resident</InputLabel>
+                <Select 
+                  value={selectedResident} 
+                  label="Select Resident" 
+                  onChange={(e) => setSelectedResident(e.target.value)}
+                >
+                  {residents.map(res => (
+                    <MenuItem key={res._id} value={res._id}>
+                      {res.lastName}, {res.firstName}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+          )}
+
+          <Grid item xs={6} md={2}>
             <TextField 
               label="Start Date" 
               name="startDate" 
               type="date" 
               fullWidth 
               InputLabelProps={{ shrink: true }} 
+              value={dateRange.startDate}
               onChange={handleChange} 
             />
           </Grid>
-          <Grid item xs={12} md={4}>
+          <Grid item xs={6} md={2}>
             <TextField 
               label="End Date" 
               name="endDate" 
               type="date" 
               fullWidth 
-              InputLabelProps={{ shrink: true }} 
+              InputLabelProps={{ shrink: true }}
+              value={dateRange.endDate} 
               onChange={handleChange} 
             />
           </Grid>
-          <Grid item xs={12} md={4} sx={{ display: 'flex', gap: 2 }}>
+          
+          <Grid item xs={12} md={2}>
             <Button variant="contained" fullWidth startIcon={<AssessmentIcon />} onClick={generateReport}>
               Generate
             </Button>
-            {reportData && (
-              <Button variant="outlined" fullWidth startIcon={<PrintIcon />} onClick={handlePrint}>
-                Print
-              </Button>
-            )}
           </Grid>
         </Grid>
       </Paper>
 
+      {/* REPORT DISPLAY */}
       {reportData && (
-        <Paper sx={{ p: 4 }} id="printable-area">
-          <Box sx={{ textAlign: 'center', mb: 4 }}>
-            <Typography variant="h5" sx={{ fontWeight: 'bold' }}>BANCOM LIFE HOMEOWNERS ASSOCIATION, INC.</Typography>
-            <Typography variant="subtitle1">Financial Statement Summary</Typography>
-            <Typography variant="caption">
-              Period: {new Date(reportData.startDate).toLocaleDateString()} - {new Date(reportData.endDate).toLocaleDateString()}
-            </Typography>
+        <Box>
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+            <Button variant="outlined" startIcon={<PrintIcon />} onClick={handlePrint}>
+              Print Report
+            </Button>
           </Box>
 
-          <Grid container spacing={3} sx={{ mb: 4 }}>
-            <Grid item xs={4}>
-              <Paper variant="outlined" sx={{ p: 2, textAlign: 'center', bgcolor: '#e8f5e9' }}>
-                <Typography variant="subtitle2">Total Collections</Typography>
-                <Typography variant="h6" color="success.main">₱{reportData.totalCollections.toLocaleString()}</Typography>
-              </Paper>
-            </Grid>
-            <Grid item xs={4}>
-              <Paper variant="outlined" sx={{ p: 2, textAlign: 'center', bgcolor: '#ffebee' }}>
-                <Typography variant="subtitle2">Total Expenses</Typography>
-                <Typography variant="h6" color="error.main">₱{reportData.totalExpenses.toLocaleString()}</Typography>
-              </Paper>
-            </Grid>
-            <Grid item xs={4}>
-              <Paper variant="outlined" sx={{ p: 2, textAlign: 'center', bgcolor: '#e3f2fd' }}>
-                <Typography variant="subtitle2">Net Balance</Typography>
-                <Typography variant="h6" color="primary.main">₱{reportData.netBalance.toLocaleString()}</Typography>
-              </Paper>
-            </Grid>
-          </Grid>
-
-          <Divider sx={{ mb: 2 }} />
-          <Typography variant="h6" sx={{ mb: 2 }}>Income Breakdown</Typography>
-          <TableContainer sx={{ mb: 4 }}>
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Date</TableCell>
-                  <TableCell>Resident</TableCell>
-                  <TableCell>Method</TableCell>
-                  <TableCell align="right">Amount</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {reportData.transactions.map((t) => (
-                  <TableRow key={t._id}>
-                    <TableCell>{new Date(t.paymentDate).toLocaleDateString()}</TableCell>
-                    <TableCell>{t.resident ? `${t.resident.lastName}, ${t.resident.firstName}` : 'Unknown'}</TableCell>
-                    <TableCell sx={{ textTransform: 'capitalize' }}>{t.paymentMethod.replace('_', ' ')}</TableCell>
-                    <TableCell align="right">₱{t.amountPaid.toLocaleString()}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-
-          <Divider sx={{ mb: 2 }} />
-          <Typography variant="h6" sx={{ mb: 2 }}>Expense Breakdown</Typography>
-          <TableContainer>
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Date</TableCell>
-                  <TableCell>Title</TableCell>
-                  <TableCell>Category</TableCell>
-                  <TableCell align="right">Amount</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {reportData.expenses.map((e) => (
-                  <TableRow key={e._id}>
-                    <TableCell>{new Date(e.date).toLocaleDateString()}</TableCell>
-                    <TableCell>{e.title}</TableCell>
-                    <TableCell sx={{ textTransform: 'capitalize' }}>{e.category}</TableCell>
-                    <TableCell align="right">₱{e.amount.toLocaleString()}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-
-          <Box sx={{ mt: 8, display: 'flex', justifyContent: 'space-between' }}>
-            <Box sx={{ textAlign: 'center', minWidth: 200 }}>
-              <Divider />
-              <Typography variant="subtitle2" sx={{ mt: 1 }}>Prepared By</Typography>
+          <Paper sx={{ p: 5 }} ref={componentRef} id="printable-area">
+            {/* Report Header */}
+            <Box sx={{ textAlign: 'center', mb: 4 }}>
+              <Typography variant="h5" sx={{ fontWeight: 'bold' }}>BANCOM LIFE HOMEOWNERS ASSOCIATION, INC.</Typography>
+              <Typography variant="body2">San Mateo, Rizal</Typography>
+              <Divider sx={{ my: 2 }} />
+              <Typography variant="h6" sx={{ textTransform: 'uppercase', letterSpacing: 1 }}>{reportData.title}</Typography>
+              <Typography variant="caption">
+                Period: {new Date(dateRange.startDate).toLocaleDateString()} - {new Date(dateRange.endDate).toLocaleDateString()}
+              </Typography>
             </Box>
-            <Box sx={{ textAlign: 'center', minWidth: 200 }}>
-              <Divider />
-              <Typography variant="subtitle2" sx={{ mt: 1 }}>Approved By (President)</Typography>
+
+            {/* Special View for Financial Summary */}
+            {reportType === 'financial_summary' ? (
+              <Grid container spacing={3} sx={{ mb: 4, mt: 2 }}>
+                <Grid item xs={4}>
+                  <Paper variant="outlined" sx={{ p: 3, textAlign: 'center', bgcolor: '#f1f8e9' }}>
+                    <Typography variant="subtitle2">Total Collections</Typography>
+                    <Typography variant="h5" color="success.main">₱{reportData.totalCollections.toLocaleString()}</Typography>
+                  </Paper>
+                </Grid>
+                <Grid item xs={4}>
+                  <Paper variant="outlined" sx={{ p: 3, textAlign: 'center', bgcolor: '#ffebee' }}>
+                    <Typography variant="subtitle2">Total Expenses</Typography>
+                    <Typography variant="h5" color="error.main">₱{reportData.totalExpenses.toLocaleString()}</Typography>
+                  </Paper>
+                </Grid>
+                <Grid item xs={4}>
+                  <Paper variant="outlined" sx={{ p: 3, textAlign: 'center', bgcolor: '#e3f2fd' }}>
+                    <Typography variant="subtitle2">Net Balance</Typography>
+                    <Typography variant="h5" color="primary.main">₱{reportData.netBalance.toLocaleString()}</Typography>
+                  </Paper>
+                </Grid>
+              </Grid>
+            ) : (
+              // Table View for Other Reports
+              <>
+                {reportType === 'customer_ledger' && (
+                  <Box sx={{ mb: 3 }}>
+                    <Typography><strong>Resident:</strong> {reportData.residentDetails.lastName}, {reportData.residentDetails.firstName}</Typography>
+                    <Typography><strong>Address:</strong> Blk {reportData.residentDetails.address.block} Lot {reportData.residentDetails.address.lot}</Typography>
+                  </Box>
+                )}
+
+                <TableContainer sx={{ border: '1px solid #eee' }}>
+                  <Table size="small">
+                    <TableHead sx={{ bgcolor: '#eeeeee' }}>
+                      {renderTableHead()}
+                    </TableHead>
+                    <TableBody>
+                      {renderTableBody()}
+                      {/* Footer Row for Totals */}
+                      {(reportType === 'collection_report' || reportType === 'expense_report') && (
+                        <TableRow>
+                          <TableCell colSpan={reportType === 'collection_report' ? 4 : 3} sx={{ fontWeight: 'bold', textAlign: 'right' }}>
+                            TOTAL:
+                          </TableCell>
+                          <TableCell align="right" sx={{ fontWeight: 'bold' }}>
+                            ₱{reportData.total.toLocaleString()}
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </>
+            )}
+
+            {/* Report Footer */}
+            <Box sx={{ mt: 8, display: 'flex', justifyContent: 'space-between', px: 4 }}>
+              <Box sx={{ textAlign: 'center', width: 200 }}>
+                <Divider />
+                <Typography variant="subtitle2" sx={{ mt: 1 }}>Prepared By</Typography>
+              </Box>
+              <Box sx={{ textAlign: 'center', width: 200 }}>
+                <Divider />
+                <Typography variant="subtitle2" sx={{ mt: 1 }}>Approved By</Typography>
+              </Box>
             </Box>
-          </Box>
-        </Paper>
+          </Paper>
+        </Box>
       )}
     </Layout>
   );

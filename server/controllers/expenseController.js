@@ -14,7 +14,8 @@ const getExpenses = async (req, res) => {
 // @desc    Add new expense
 // @route   POST /api/expenses
 const addExpense = async (req, res) => {
-  const { title, category, amount, description, date } = req.body;
+  // Added particulars and proofImage to destructuring
+  const { title, particulars, category, amount, description, date, proofImage } = req.body;
 
   if (!title || !amount) {
     return res.status(400).json({ message: 'Please provide title and amount' });
@@ -23,9 +24,11 @@ const addExpense = async (req, res) => {
   try {
     const expense = await Expense.create({
       title,
+      particulars, // Save Particulars
       category,
       amount,
       description,
+      proofImage, // Save Image String
       date: date || Date.now(),
       recordedBy: req.user.id,
     });

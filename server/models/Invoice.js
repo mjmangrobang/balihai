@@ -12,15 +12,23 @@ const InvoiceSchema = new mongoose.Schema({
     default: 'monthly_dues',
   },
   description: {
-    type: String, // e.g., "January 2025 Dues"
+    type: String,
     required: true,
   },
   amount: {
-    type: Number,
+    type: Number, // Base Amount
     required: true,
   },
-  month: { type: String }, // e.g., "January"
-  year: { type: Number },  // e.g., 2025
+  penalty: {
+    type: Number, // Added Penalty for delinquents
+    default: 0,
+  },
+  totalAmount: {
+    type: Number, // Amount + Penalty
+    required: true,
+  },
+  month: { type: String },
+  year: { type: Number },
   dueDate: {
     type: Date,
     required: true,

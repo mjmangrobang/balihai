@@ -5,6 +5,9 @@ const ExpenseSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  particulars: { // New Field: Specific details
+    type: String,
+  },
   category: {
     type: String,
     enum: ['maintenance', 'utilities', 'salaries', 'supplies', 'other'],
@@ -19,6 +22,9 @@ const ExpenseSchema = new mongoose.Schema({
     default: Date.now,
   },
   description: {
+    type: String,
+  },
+  proofImage: { // New Field: Stores the receipt image (Base64 string)
     type: String,
   },
   recordedBy: {

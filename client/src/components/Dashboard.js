@@ -1,11 +1,23 @@
 import React, { useEffect, useState } from 'react';
-// CHANGE: Import from custom api config
 import axios from '../api/axios';
 import Layout from './Layout';
-import { Grid, Paper, Typography, Box, CircularProgress } from '@mui/material';
+import { 
+  Grid, 
+  Paper, 
+  Typography, 
+  Box, 
+  CircularProgress, 
+  List, 
+  ListItem, 
+  ListItemText, 
+  Divider, 
+  Chip 
+} from '@mui/material';
 import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
 import WarningIcon from '@mui/icons-material/Warning';
 import MonetizationOnIcon from '@mui/icons-material/MonetizationOn';
+import CampaignIcon from '@mui/icons-material/Campaign';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 
 const StatCard = ({ title, value, icon, color }) => (
   <Paper elevation={3} sx={{ p: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center', height: '100%' }}>
@@ -28,7 +40,9 @@ const Dashboard = () => {
     totalResidents: 0,
     delinquentResidents: 0,
     delinquencyRate: 0,
-    monthlyCollection: 0
+    monthlyCollection: 0,
+    incomeHistory: [],
+    announcements: []
   });
   const [loading, setLoading] = useState(true);
 
@@ -52,6 +66,12 @@ const Dashboard = () => {
     fetchStats();
   }, []);
 
+  const getPriorityColor = (priority) => {
+    if (priority === 'urgent') return 'error';
+    if (priority === 'high') return 'warning';
+    return 'primary';
+  };
+
   if (loading) {
     return (
       <Layout>
@@ -68,7 +88,8 @@ const Dashboard = () => {
         Dashboard Overview
       </Typography>
       
-      <Grid container spacing={3}>
+      {/* STAT CARDS */}
+      <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid item xs={12} sm={6} md={3}>
           <StatCard 
             title="Total Residents" 
@@ -96,23 +117,82 @@ const Dashboard = () => {
         <Grid item xs={12} sm={6} md={3}>
           <StatCard 
             title="Monthly Collection" 
-            value={`₱${stats.monthlyCollection}`} 
+            value={`₱${stats.monthlyCollection.toLocaleString()}`} 
             icon={<MonetizationOnIcon fontSize="large" />}
             color="#2e7d32"
           />
         </Grid>
       </Grid>
 
-      <Box sx={{ mt: 5 }}>
-        <Paper sx={{ p: 3 }}>
-          <Typography variant="h6" gutterBottom>
-            System Announcements
-          </Typography>
-          <Typography variant="body2">
-            Welcome to the new Bancom Life Web-Based System. Use the sidebar to manage residents.
-          </Typography>
-        </Paper>
-      </Box>
+      <Grid container spacing={3}>
+        {/* CHART SECTION */}
+        <Grid item xs={12} md={8}>
+          <Paper elevation={3} sx={{ p: 3, height: '400px' }}>
+            <Typography variant="h6" gutterBottom>
+              Income Overview (Last 6 Months)
+            </Typography>
+            <ResponsiveContainer width="100%" height="90%">
+              <BarChart data={stats.incomeHistory}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip formatter={(value) => `₱${value.toLocaleString()}`} />
+                <Bar dataKey="income" fill="#2e7d32" />
+              </BarChart>
+            </ResponsiveContainer>
+          </Paper>
+        </Grid>
+
+        {/* ANNOUNCEMENTS SECTION */}
+        <Grid item xs={12} md={4}>
+          <Paper elevation={3} sx={{ p: 3, height: '400px', overflow: 'auto' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, gap: 1 }}>
+              <CampaignIcon color="primary" />
+              <Typography variant="h6">Recent Announcements</Typography>
+            </Box>
+            <List>
+              {stats.announcements.length > 0 ? (
+                stats.announcements.map((announcement, index) => (
+                  <React.Fragment key={announcement._id}>
+                    <ListItem alignItems="flex-start" sx={{ px: 0 }}>
+                      <ListItemText
+                        primary={
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
+                              {announcement.title}
+                            </Typography>
+                            <Chip 
+                              label={announcement.priority} 
+                              size="small" 
+                              color={getPriorityColor(announcement.priority)} 
+                              sx={{ height: 20, fontSize: '0.7rem' }}
+                            />
+                          </Box>
+                        }
+                        secondary={
+                          <>
+                            <Typography variant="body2" color="text.primary" sx={{ mt: 0.5 }}>
+                              {announcement.details.substring(0, 80)}...
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
+                              {new Date(announcement.createdAt).toLocaleDateString()}
+                            </Typography>
+                          </>
+                        }
+                      />
+                    </ListItem>
+                    {index < stats.announcements.length - 1 && <Divider />}
+                  </React.Fragment>
+                ))
+              ) : (
+                <Typography variant="body2" color="textSecondary" align="center" sx={{ mt: 4 }}>
+                  No recent announcements.
+                </Typography>
+              )}
+            </List>
+          </Paper>
+        </Grid>
+      </Grid>
     </Layout>
   );
 };

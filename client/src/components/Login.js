@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-// CHANGE: We now import from our custom api file, not the default library
 import axios from '../api/axios'; 
 import {
   Container,
@@ -36,7 +35,6 @@ const Login = () => {
     setError('');
 
     try {
-      // The base URL (http://localhost:5000) is now automatically handled by axios.js
       const response = await axios.post('/api/auth/login', {
         email,
         password,
@@ -45,7 +43,6 @@ const Login = () => {
       if (response.data) {
         localStorage.setItem('user', JSON.stringify(response.data));
         
-        // REDIRECT LOGIC
         if (response.data.role === 'resident') {
           navigate('/resident-dashboard');
         } else {
@@ -85,7 +82,8 @@ const Login = () => {
             </Alert>
           )}
 
-          <Box component="form" onSubmit={onSubmit} sx={{ mt: 1, width: '100%' }}>
+          {/* Added autoComplete="off" to the form element */}
+          <Box component="form" onSubmit={onSubmit} sx={{ mt: 1, width: '100%' }} autoComplete="off">
             <TextField
               margin="normal"
               required
@@ -93,7 +91,8 @@ const Login = () => {
               id="email"
               label="Email Address"
               name="email"
-              autoComplete="email"
+              // Changed to 'off' to disable suggestion
+              autoComplete="off"
               autoFocus
               value={email}
               onChange={onChange}
@@ -106,7 +105,8 @@ const Login = () => {
               label="Password"
               type="password"
               id="password"
-              autoComplete="current-password"
+              // Changed to 'new-password' to prevent browser caching of old passwords
+              autoComplete="new-password"
               value={password}
               onChange={onChange}
             />
