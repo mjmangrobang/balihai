@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+// CHANGE: We now import from our custom api file, not the default library
+import axios from '../api/axios'; 
 import {
   Container,
   Box,
@@ -35,6 +36,7 @@ const Login = () => {
     setError('');
 
     try {
+      // The base URL (http://localhost:5000) is now automatically handled by axios.js
       const response = await axios.post('/api/auth/login', {
         email,
         password,
@@ -51,7 +53,6 @@ const Login = () => {
         }
       }
     } catch (err) {
-      // ... existing error handling
       const errorMessage = 
         err.response && err.response.data && err.response.data.message
           ? err.response.data.message
