@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-// CHANGE: Import from custom api config
 import axios from '../api/axios';
 import Layout from './Layout';
 import {
@@ -14,9 +13,14 @@ import {
   TableRow,
   Chip,
   Grid,
-  Alert
+  Alert,
+  Card,
+  CardContent,
+  Divider
 } from '@mui/material';
 import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
+import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
+import HistoryIcon from '@mui/icons-material/History';
 
 const ResidentDashboard = () => {
   const [invoices, setInvoices] = useState([]);
@@ -38,9 +42,11 @@ const ResidentDashboard = () => {
     }
   };
 
-  const totalUnpaid = invoices
-    .filter(inv => inv.status !== 'paid')
-    .reduce((acc, curr) => acc + curr.amount, 0);
+  // Separate Pending vs History
+  const pendingInvoices = invoices.filter(inv => inv.status !== 'paid');
+  const historyInvoices = invoices.filter(inv => inv.status === 'paid');
+
+  const totalUnpaid = pendingInvoices.reduce((acc, curr) => acc + (curr.totalAmount || curr.amount), 0);
 
   return (
     <Layout>
@@ -49,63 +55,99 @@ const ResidentDashboard = () => {
           Welcome, {user.name}
         </Typography>
         <Typography variant="subtitle1" color="textSecondary">
-          Here is your account summary and billing history.
+          Bancom Life Homeowners' Association
         </Typography>
       </Box>
 
-      <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid item xs={12} md={4}>
-          <Paper 
-            elevation={3} 
-            sx={{ p: 3, bgcolor: totalUnpaid > 0 ? '#ffebee' : '#e8f5e9', display: 'flex', alignItems: 'center', gap: 2 }}
-          >
-            <AccountBalanceWalletIcon color={totalUnpaid > 0 ? 'error' : 'success'} fontSize="large" />
-            <Box>
-              <Typography variant="subtitle2">Total Outstanding Balance</Typography>
-              <Typography variant="h4" sx={{ fontWeight: 'bold', color: totalUnpaid > 0 ? '#d32f2f' : '#2e7d32' }}>
-                ₱{totalUnpaid.toLocaleString()}
-              </Typography>
-            </Box>
-          </Paper>
+      <Grid container spacing={3} sx={{ mb: 5 }}>
+        <Grid item xs={12} md={6}>
+          <Card elevation={3} sx={{ bgcolor: '#d32f2f', color: 'white' }}>
+            <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <AccountBalanceWalletIcon fontSize="large" />
+              <Box>
+                <Typography variant="subtitle2">Total Outstanding Balance</Typography>
+                <Typography variant="h3" fontWeight="bold">
+                  ₱{totalUnpaid.toLocaleString()}
+                </Typography>
+              </Box>
+            </CardContent>
+          </Card>
         </Grid>
       </Grid>
 
-      <Typography variant="h6" gutterBottom>
-        My Billing History
-      </Typography>
-      
-      {invoices.length === 0 ? (
-        <Alert severity="info">You have no billing records yet.</Alert>
-      ) : (
-        <TableContainer component={Paper}>
-          <Table>
-            <TableHead sx={{ backgroundColor: '#f5f5f5' }}>
-              <TableRow>
-                <TableCell>Description</TableCell>
-                <TableCell>Due Date</TableCell>
-                <TableCell>Amount</TableCell>
-                <TableCell>Status</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {invoices.map((invoice) => (
-                <TableRow key={invoice._id}>
-                  <TableCell>{invoice.description}</TableCell>
-                  <TableCell>{new Date(invoice.dueDate).toLocaleDateString()}</TableCell>
-                  <TableCell>₱{invoice.amount.toLocaleString()}</TableCell>
-                  <TableCell>
-                    <Chip 
-                      label={invoice.status.toUpperCase()} 
-                      color={invoice.status === 'paid' ? 'success' : 'error'}
-                      size="small"
-                    />
-                  </TableCell>
+      {/* PENDING BILLS SECTION */}
+      <Box sx={{ mb: 5 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+          <ReceiptLongIcon color="error" />
+          <Typography variant="h5" fontWeight="bold">Pending Dues</Typography>
+        </Box>
+        
+        {pendingInvoices.length === 0 ? (
+          <Alert severity="success">You have no pending dues. Good standing!</Alert>
+        ) : (
+          <Grid container spacing={2}>
+            {pendingInvoices.map((invoice) => (
+              <Grid item xs={12} md={6} key={invoice._id}>
+                <Paper elevation={2} sx={{ p: 3, borderLeft: '6px solid #d32f2f' }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
+                    <Box>
+                      <Typography variant="h6">{invoice.description}</Typography>
+                      <Typography variant="body2" color="textSecondary">
+                        Due: {new Date(invoice.dueDate).toLocaleDateString()}
+                      </Typography>
+                    </Box>
+                    <Chip label={invoice.status.toUpperCase()} color="error" size="small" />
+                  </Box>
+                  <Divider sx={{ my: 2 }} />
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Typography variant="body2">Amount Due:</Typography>
+                    <Typography variant="h5" fontWeight="bold" color="error.main">
+                      ₱{(invoice.totalAmount || invoice.amount).toLocaleString()}
+                    </Typography>
+                  </Box>
+                </Paper>
+              </Grid>
+            ))}
+          </Grid>
+        )}
+      </Box>
+
+      {/* BILLING HISTORY SECTION */}
+      <Box>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+          <HistoryIcon color="primary" />
+          <Typography variant="h5" fontWeight="bold">Billing History</Typography>
+        </Box>
+
+        {historyInvoices.length === 0 ? (
+          <Alert severity="info">No payment history found.</Alert>
+        ) : (
+          <TableContainer component={Paper}>
+            <Table>
+              <TableHead sx={{ backgroundColor: '#f5f5f5' }}>
+                <TableRow>
+                  <TableCell>Description</TableCell>
+                  <TableCell>Due Date</TableCell>
+                  <TableCell>Amount Paid</TableCell>
+                  <TableCell>Status</TableCell>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      )}
+              </TableHead>
+              <TableBody>
+                {historyInvoices.map((invoice) => (
+                  <TableRow key={invoice._id}>
+                    <TableCell>{invoice.description}</TableCell>
+                    <TableCell>{new Date(invoice.dueDate).toLocaleDateString()}</TableCell>
+                    <TableCell>₱{(invoice.totalAmount || invoice.amount).toLocaleString()}</TableCell>
+                    <TableCell>
+                      <Chip label="PAID" color="success" size="small" />
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        )}
+      </Box>
     </Layout>
   );
 };
