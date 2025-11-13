@@ -14,6 +14,14 @@ const AnnouncementSchema = new mongoose.Schema({
     enum: ['normal', 'high', 'urgent'],
     default: 'normal',
   },
+  expirationDate: { // New Field
+    type: Date,
+    required: true
+  },
+  isArchived: { // New Field
+    type: Boolean,
+    default: false
+  },
   postedBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
